@@ -4,3 +4,5 @@
 #*.jar
 *.war
 *.ear
+/taobaoztc/target/
+/taobaoztc/nb-configuration.xml
