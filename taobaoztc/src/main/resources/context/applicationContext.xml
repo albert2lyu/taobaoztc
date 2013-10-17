@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="GBK"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+         http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd">
+
+    <context:component-scan base-package="com.fnpnet.taobao.taobaoztc" />
+    <context:property-placeholder location="classpath:default.properties,file:${user.home}/fnpnet/taobaoztc.properties" ignore-unresolvable="true" ignore-resource-not-found="true" />
+    
+    <!-- 配置DataSource数据源 -->
+    <bean id="mysqlDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="url" value="${market.mysql.url}" />
+        <property name="username" value="${market.mysql.username}" />
+        <property name="password" value="${market.mysql.password}" />
+        <property name="driverClassName" value="${market.mysql.driverClassName}" />
+
+        <!-- 最大连接数 -->
+        <property name="maxActive" value="${market.mysql.pool.maxActive}" />
+        <!-- 最大空闲连接数 -->
+        <property name="maxIdle" value="${market.mysql.pool.maxIdle}" />
+        <!-- 最少空闲连接数 -->
+        <property name="minIdle" value="${market.mysql.pool.minIdle}" />
+        <!-- 初始化连接数目 -->
+        <property name="initialSize" value="${market.mysql.pool.minIdle}" />
+        <!-- 连接池中连接用完时,新的请求等待时间(毫秒) -->
+        <property name="maxWait" value="${market.mysql.pool.maxWait}" />
+
+        <!-- 空闲时是否检查, -->
+        <property name="testWhileIdle" value="${market.mysql.pool.testWhileIdle}" />
+        <property name="testOnBorrow" value="${market.mysql.pool.testOnReturn}" />
+        <property name="testOnReturn" value="${market.mysql.pool.testOnBorrow}" />
+        <!-- 检查时用的sql -->
+        <property name="validationQuery" value="select 2" />
+        <!-- 检查sql结果有效时间(秒) -->
+        <property name="validationQueryTimeout" value="${market.mysql.pool.validationQueryTimeout}" />
+        <!-- 空闲回收器每次检查连接数,依次循环检查,默认全部 <property name="numTestsPerEvictionRun" value="${market.mysql.pool.maxActive}"/> -->
+        <!-- 空闲回收器 运行间隔(毫秒),负数不运行。最好小于 minEvictableIdleTimeMillis -->
+        <property name="timeBetweenEvictionRunsMillis" value="${market.mysql.pool.timeBetweenEvictionRunsMillis}" />
+        <!-- 可空闲时间(毫秒),超过该时间将被空闲回收器回收。最好小于DB中的 wait_timeout值 -->
+        <property name="minEvictableIdleTimeMillis" value="${market.mysql.pool.minEvictableIdleTimeMillis}" />
+
+        <!-- 是否自动回收超时连接(活动连接，不在连接池中，如慢查询) -->
+        <!-- 这个机制在(getNumIdle() < 2) and (getNumActive() > getMaxActive() - 3)时被触发 -->
+        <property name="removeAbandoned" value="${market.mysql.pool.removeAbandoned}" />
+        <!-- 超时时间 (秒).没有被使用的时间,在resultset中游历不被计算为被使用 -->
+        <property name="removeAbandonedTimeout" value="${market.mysql.pool.removeAbandonedTimeout}" />
+        <!-- 回收超时连接时是否打印连接超时错误 -->
+        <property name="logAbandoned" value="${market.mysql.pool.logAbandoned}" />
+
+        <!-- 其他设置：默认值 -->
+        <!-- poolPreparedStatements=false 开启prepared statement池功能，将为每个连接创建一个statement池 -->
+        <!-- maxOpenPreparedStatements=0 statement池能够同时分配的打开的statements的最大数量,0不限制 -->
+        <!-- accessToUnderlyingConnectionAllowed=false 控制PoolGuard是否容许获取底层连接 -->
+        <!-- connectionProperties=? 连接参数 -->
+        <!-- whenExhausted=? 池中连接耗尽的时候，DBCP将怎样处理 0:失败, 1:等待, 2:增长 -->
+        <!-- defaultAutoCommit=false 是否自动提交 -->
+    </bean>
+    
+    <!-- 配置SqlSessionFactoryBean -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="mysqlDataSource" />
+        <property name="configLocation" value="classpath:context/mybatis.xml" />
+        <!-- mapper和resultmap配置路径 -->
+        <property name="mapperLocations">
+            <list>
+                <value>classpath:com/glodon/paas/appstore/market/web/dao/mapper/*.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+        <property name="basePackage" value="com.glodon.paas.appstore.market.web.dao.mapper" />
+    </bean>
+
+</beans>

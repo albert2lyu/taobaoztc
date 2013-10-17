@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glodon.paas.appstore.market.web.dao.mapper.MarketMapper">
+    <!-- add by hch start-->
+    
+    <!-- add by hch end-->
+    <select id="getAllAppBaseinfo" resultType="com.glodon.paas.appstore.market.api.AppBaseInfo">
+        SELECT app_id,app_info.isv_id,app_name,isv_company_info.company_name as isv_name,app_logourl,app_url,app_describe,app_info.name,app_info.phone 
+        FROM app_info JOIN isv_company_info on app_info.isv_id=isv_company_info.isv_id
+    </select>
+    
+    <select id="updateAppBaseinfo" parameterType="com.glodon.paas.appstore.market.api.AppBaseInfo">
+        UPDATE app_info SET app_status=#{app_status},app_approvaltime=#{app_approvaltime} WHERE app_id=#{app_id}
+    </select>
+    
+    <select id="getAllAppBaseinfoByisvid" parameterType="int" resultType="com.glodon.paas.appstore.market.api.AppBaseInfo">
+        SELECT app_id,isv_id,app_name FROM app_info WHERE isv_id=#{isvid} ORDER BY app_id ASC
+    </select>
+    
+    <select id="getAppBaseinfoByappid" parameterType="int" resultType="com.glodon.paas.appstore.market.api.AppBaseInfo">
+        SELECT app_id,app_type,app_info.isv_id,app_name,isv_company_info.company_name as isv_name,app_logourl,app_url,app_detailhtml,app_describe,app_info.name,app_info.phone 
+        FROM app_info JOIN isv_company_info on app_info.isv_id=isv_company_info.isv_id WHERE  app_id=#{appid}
+    </select>
+    
+    <select id="getAppBaseinfoListByisvid" parameterType="int" resultType="com.glodon.paas.appstore.market.api.AppBaseInfo">
+        <!--        SELECT app_id,isv_id,app_name,app_type,app_logourl,app_url,app_describe,name,phone,app_status,app_publishtime,app_approvaltime 
+        FROM app_info  WHERE  isv_id=#{isvid} ORDER BY app_id ASC-->
+        SELECT app_id,isv_id,app_name,app_type,app_logourl,app_url,app_describe,name,phone,app_status,app_publishtime,app_approvaltime 
+        FROM app_info ORDER BY app_id ASC
+    </select>
+    
+    <select id="getAppAllPicture" parameterType="int" resultType="String">
+        SELECT printscreen_url from app_printscreen WHERE  app_id=#{appid}
+    </select>
+    
+    <select id="getSalesPkg" parameterType="String" resultType="com.glodon.paas.appstore.market.api.SalesPkg">
+        SELECT salespkg_id,salespkg_name,user_type,allow_total,allow_times from app_salespkg WHERE  salespkg_id=#{salespkgid}
+    </select>
+    
+    <select id="getAppAllSalesPkg" parameterType="int" resultType="com.glodon.paas.appstore.market.api.SalesPkg">
+        SELECT DISTINCT
+        app_salespkg.salespkg_id,
+        app_salespkg.salespkg_name,
+        app_salespkg.user_type,
+        app_salespkg.allow_total,
+        app_salespkg.allow_times
+        FROM
+        app_salespkg
+        INNER JOIN relationship_salespkg_modulepkg ON app_salespkg.salespkg_id = relationship_salespkg_modulepkg.salespkg_id
+        INNER JOIN relationship_modulepkg_module ON relationship_salespkg_modulepkg.modulepkg_id = relationship_modulepkg_module.modulepkg_id
+        INNER JOIN app_module ON relationship_modulepkg_module.module_id = app_module.module_id WHERE app_module.app_id=#{appid} ORDER BY app_salespkg.salespkg_id
+    </select>
+    
+    <select id="getSalesPkgAllPrice" parameterType="int" resultType="com.glodon.paas.appstore.market.api.SalesPkgPrice">
+        SELECT
+        app_salespkgprice.price_id,
+        app_salespkgprice.price_name,
+        app_salespkgprice.price_money
+        FROM
+        app_salespkgprice WHERE app_salespkgprice.salespkg_id=#{salespkgid} ORDER BY price_id
+    </select>
+    
+    <select id="addBuyInfo" parameterType="com.glodon.paas.appstore.market.api.BuyInfo">
+        INSERT INTO app_buylog(buy_id,orderid,user_id,user_type,enterprise_id) VALUES(#{buy_id},#{orderid},#{user_id},#{user_type},#{enterprise_id})
+    </select>
+    
+    <select id="updateBuyInfo" parameterType="com.glodon.paas.appstore.market.api.BuyInfo">
+        UPDATE app_buylog SET orderid=#{orderid} WHERE buy_id=#{buy_id}
+    </select>
+    
+    <select id="paytoupdateBuyInfo" parameterType="com.glodon.paas.appstore.market.api.BuyInfo">
+        UPDATE app_buylog SET effective_date=#{effective_date},notifystatus=#{notifystatus} WHERE buy_id=#{buy_id}
+    </select>
+    
+    <select id="addBuyItem" parameterType="com.glodon.paas.appstore.market.api.BuyItem">
+        INSERT INTO app_buyitem(buy_id,price_id,total) VALUES(#{buy_id},#{price_id},#{total})
+    </select>
+    
+    <select id="getCertificateBaseInfo" parameterType="com.glodon.paas.appstore.market.api.BuyInfo" resultType="com.glodon.paas.appstore.market.api.BuyInfo">
+        SELECT
+        app_buylog.user_id,
+        app_buylog.effective_date,
+        app_buylog.user_type,
+        app_buylog.enterprise_id,
+        app_buyitem.total,
+        app_salespkgprice.salespkg_id,
+        app_salespkgprice.quota_values,
+        app_salespkgprice.effective_type,
+        app_salespkgprice.expirydate,
+        app_salespkgprice.days
+        FROM
+        app_buylog ,
+        app_buyitem ,
+        app_salespkgprice
+        WHERE
+        app_buylog.buy_id = app_buyitem.buy_id AND
+        app_buyitem.price_id = app_salespkgprice.price_id AND
+        app_buylog.buy_id = #{buy_id}
+    </select>
+    
+    <select id="getAllCertitem" parameterType="int" resultType="com.glodon.paas.appstore.market.api.BuyItem">
+        SELECT DISTINCT
+        relationship_salespkg_modulepkg.modulepkg_id,
+        app_module.app_id
+        FROM
+        relationship_salespkg_modulepkg ,
+        app_module ,
+        relationship_modulepkg_module
+        WHERE
+        relationship_salespkg_modulepkg.modulepkg_id = relationship_modulepkg_module.modulepkg_id AND
+        relationship_modulepkg_module.module_id = app_module.module_id AND relationship_salespkg_modulepkg.salespkg_id=#{salespkgid}
+    </select>
+    
+    <select id="getAllBuyInfoByUserid" parameterType="com.glodon.paas.appstore.market.api.BuyInfo" resultType="com.glodon.paas.appstore.market.api.BuyInfo">
+        SELECT
+        app_buylog.user_id,
+        app_buylog.effective_date,
+        app_buylog.user_type,
+        app_buylog.enterprise_id,
+        app_buyitem.total,
+        app_salespkgprice.salespkg_id,
+        app_salespkgprice.quota_values,
+        app_salespkgprice.effective_type,
+        app_salespkgprice.expirydate,
+        app_salespkgprice.days
+        FROM
+        app_buylog ,
+        app_buyitem ,
+        app_salespkgprice
+        WHERE
+        app_buylog.buy_id = app_buyitem.buy_id AND
+        app_buyitem.price_id = app_salespkgprice.price_id AND
+        app_buylog.user_id=#{user_id} AND
+        app_salespkgprice.salespkg_id=#{salespkg_id} AND
+        app_buylog.user_type='0' AND
+        app_buylog.effective_date IS NOT NULL
+    </select>
+    
+    <select id="getAllBuyInfoByEntid" parameterType="com.glodon.paas.appstore.market.api.BuyInfo" resultType="com.glodon.paas.appstore.market.api.BuyInfo">
+        SELECT
+        app_buylog.user_id,
+        app_buylog.effective_date,
+        app_buylog.user_type,
+        app_buylog.enterprise_id,
+        app_buyitem.total,
+        app_salespkgprice.salespkg_id,
+        app_salespkgprice.quota_values,
+        app_salespkgprice.effective_type,
+        app_salespkgprice.expirydate,
+        app_salespkgprice.days
+        FROM
+        app_buylog ,
+        app_buyitem ,
+        app_salespkgprice
+        WHERE
+        app_buylog.buy_id = app_buyitem.buy_id AND
+        app_buyitem.price_id = app_salespkgprice.price_id AND
+        app_buylog.enterprise_id=#{enterprise_id} AND
+        app_salespkgprice.salespkg_id=#{salespkg_id} AND
+        app_buylog.user_type='1' AND
+        app_buylog.effective_date IS NOT NULL
+    </select>
+    
+    <select id="getAllAppCategory" resultType="com.glodon.paas.appstore.market.api.AppCategory">
+        SELECT category_id,category_name FROM app_category ORDER BY category_id ASC
+    </select>
+    
+    <insert id="insertappinfo" parameterType="com.glodon.paas.appstore.market.api.AppBaseInfo" >  
+        <selectKey resultType="java.lang.Integer"  order="AFTER" keyProperty="app_id">  
+            SELECT LAST_INSERT_ID() AS ID    
+        </selectKey>  
+        INSERT INTO app_info(isv_id,app_name,app_type,app_logourl,app_url,app_describe,app_status,name,phone) 
+        VALUES(#{isv_id},#{app_name},#{app_type},#{app_logourl},#{app_url},#{app_describe},#{app_status},#{name},#{phone})
+    </insert>
+    
+    <insert id="insertappprintscreen" parameterType="com.glodon.paas.appstore.market.api.AppPrintScreen">
+        INSERT INTO app_printscreen(app_id,printscreen_url) VALUES(#{app_id},#{printscreen_url})
+    </insert>
+    
+    <insert id="insertappcategoryrelation" parameterType="com.glodon.paas.appstore.market.api.AppCategory">
+        INSERT INTO relationship_category_app(app_id,category_id) VALUES(#{app_id},#{category_id})
+    </insert>
+    
+    <insert id="insertappmodule" parameterType="com.glodon.paas.appstore.market.api.AppModule">
+        <selectKey resultType="java.lang.Integer"  order="AFTER" keyProperty="module_id">  
+            SELECT LAST_INSERT_ID() AS ID    
+        </selectKey>  
+        INSERT INTO app_module(app_id,module_name,module_code) VALUES(#{app_id},#{module_name},#{module_code})
+    </insert>
+    
+    <select id="getappmodulebyappid" resultType="com.glodon.paas.appstore.market.api.AppModule" parameterType="int">
+        SELECT module_id,module_name,module_code 
+        FROM app_module
+        where app_id = #{appid} 
+        ORDER BY module_id ASC
+    </select>
+    
+    <select id="deleteappmodulebymoduleid" parameterType="int">
+        DELETE FROM app_module WHERE module_id=#{moduleid}
+    </select>
+    
+    <select id="updateappmodule" parameterType="com.glodon.paas.appstore.market.api.AppModule">
+        UPDATE app_module SET module_name=#{module_name},module_code=#{module_code} WHERE module_id=#{module_id}
+    </select>
+    
+    <insert id="insertappmodulepkg" parameterType="com.glodon.paas.appstore.market.api.AppModulepkg">
+        <selectKey resultType="java.lang.Integer"  order="AFTER" keyProperty="modulepkg_id">  
+            SELECT LAST_INSERT_ID() AS ID    
+        </selectKey>  
+        INSERT INTO app_modulepkg(modulepkg_name) VALUES(#{modulepkg_name})
+    </insert>
+    
+    <select id="deleteappmodulepkgbymodulepkgid" parameterType="int">
+        DELETE FROM app_modulepkg WHERE modulepkg_id=#{modulepkgid}
+    </select>
+    
+    <insert id="insertappmodulerelation" parameterType="com.glodon.paas.appstore.market.api.AppModuleRelation"> 
+        INSERT INTO relationship_modulepkg_module(modulepkg_id,module_id) VALUES(#{modulepkg_id},#{module_id})
+    </insert>
+    
+    <select id="deleteappmodulerelationbymodulepkgid" parameterType="int">
+        DELETE FROM relationship_modulepkg_module WHERE modulepkg_id=#{modulepkgid}
+    </select>
+    
+    <insert id="insertappsalespkg" parameterType="com.glodon.paas.appstore.market.api.SalesPkg" >  
+        <selectKey resultType="java.lang.Integer"  order="AFTER" keyProperty="salespkg_id">  
+            SELECT LAST_INSERT_ID() AS ID    
+        </selectKey>  
+        INSERT INTO app_salespkg(salespkg_name,salespkg_status,salespkg_start,salespkg_end,user_type,allow_total,allow_times) 
+        VALUES(#{salespkg_name},#{salespkg_status},#{salespkg_start},#{salespkg_end},#{user_type},#{allow_total},#{allow_times})
+    </insert>
+    
+    <insert id="insertappsalespkgrelation" parameterType="com.glodon.paas.appstore.market.api.AppSalespkgRelation"> 
+        INSERT INTO relationship_salespkg_modulepkg(salespkg_id,modulepkg_id) VALUES(#{salespkg_id},#{modulepkg_id})
+    </insert>
+    
+    <select id="getappmodulepkgbyappid" parameterType="int" resultType="com.glodon.paas.appstore.market.api.AppModuleTemp">
+        SELECT DISTINCT
+        app_module.module_id,
+        app_module.module_name,
+        app_modulepkg.modulepkg_id,
+        app_modulepkg.modulepkg_name
+        FROM
+        app_module ,
+        app_modulepkg,
+        relationship_modulepkg_module WHERE app_module.module_id = relationship_modulepkg_module.module_id 
+        AND relationship_modulepkg_module.modulepkg_id = app_modulepkg.modulepkg_id 
+        AND app_module.app_id=#{appid} 
+        ORDER BY modulepkg_id,module_id
+    </select>
+    
+    <select id="getallappmodulepkgbyisvid" parameterType="int" resultType="com.glodon.paas.appstore.market.api.AppModuleTemp">
+        SELECT DISTINCT
+        app_modulepkg.modulepkg_id,
+        app_modulepkg.modulepkg_name
+        FROM
+        app_module
+        INNER JOIN relationship_modulepkg_module ON app_module.module_id = relationship_modulepkg_module.module_id
+        INNER JOIN app_modulepkg ON relationship_modulepkg_module.modulepkg_id = app_modulepkg.modulepkg_id
+        INNER JOIN app_info ON app_info.app_id = app_module.app_id WHERE app_info.isv_id=#{isvid} ORDER BY app_modulepkg.modulepkg_id
+    </select>
+    
+    <insert id="insertappsalespkgprice" parameterType="com.glodon.paas.appstore.market.api.SalesPkgPrice">
+        INSERT INTO app_salespkgprice(salespkg_id,price_name,quota_values,price_money,days,effective_type,expirydate) VALUES(#{salespkg_id},#{price_name},#{quota_values},#{price_money},#{days},#{effective_type},#{expirydate})
+    </insert>
+    
+    <delete id="deleteAppInfoById" parameterType="int">
+        DELETE FROM app_info WHERE app_id=#{appid}
+    </delete>
+    
+    <select id="getmodules" parameterType="String" resultType="com.glodon.paas.appstore.market.api.Module">
+        <!--        SELECT
+        app_module.app_id,
+        relationship_modulepkg_module.modulepkg_id,
+        app_module.module_id,
+        app_module.module_code
+        FROM
+        app_module
+        INNER JOIN relationship_modulepkg_module ON app_module.module_id = relationship_modulepkg_module.module_id
+        WHERE relationship_modulepkg_module.modulepkg_id IN (#{modulepkgids}) 
+        ORDER BY app_id,modulepkg_id,module_id-->
+        SELECT
+        app_module.module_id,
+        app_module.module_code
+        FROM
+        app_module
+        INNER JOIN relationship_modulepkg_module ON app_module.module_id = relationship_modulepkg_module.module_id
+        WHERE relationship_modulepkg_module.modulepkg_id IN (#{modulepkgids}) GROUP BY module_id
+        ORDER BY module_id 
+    </select>
+</mapper>

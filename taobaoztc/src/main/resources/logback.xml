@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="120 seconds" debug="false">
+    <contextName>Taobaoztc</contextName>
+    <property name="FNPNET_LOG_DIR" value="${user.home}/logs/taobaoztc" />
+    <property file="${user.home}/fnpnet/default.properties"/>
+    <property file="${user.home}/fnpnet/taobaoztc.properties"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5p %logger{36} [%file:%line] -%m%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="logfile"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${FNPNET_LOG_DIR}/market.log</File>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5p %logger{36} [%file:%line] -
+                %m%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${FNPNET_LOG_DIR}/fnpnet/taobaoztc_%d{yyyy-MM-dd}.log
+            </fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+	
+    <logger name="org" level="info"/>
+    <logger name="org.openid4java" level="info"/>
+    <logger name="com.glodon" level="info"/>
+    <logger name="java.sql" level="debug"/>
+    
+    <logger name="com.glodon.paas.appstore.market.web.controller" level="debug">
+        <appender-ref ref="logfile" />
+    </logger>
+    <root level="debug">
+        <appender-ref ref="logfile" />
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="EXCEPTION" />
+    </root>
+</configuration>
